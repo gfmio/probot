@@ -1,4 +1,3 @@
-import express from "express";
 import type {
   EmitterWebhookEvent as WebhookEvent,
   Webhooks,
@@ -59,11 +58,52 @@ export type State = {
 type SimplifiedObject = Omit<Context, keyof WebhookEvent>;
 export type ProbotWebhooks = Webhooks<SimplifiedObject>;
 
+// Framework-agnostic HTTP types
+export interface HttpRequest {
+  method: string;
+  url: string;
+  headers: Record<string, string | string[]>;
+  body?: any;
+  query?: Record<string, string | string[]>;
+  params?: Record<string, string>;
+}
+
+export interface HttpResponse {
+  status(code: number): HttpResponse;
+  header(name: string, value: string): HttpResponse;
+  json(data: any): HttpResponse;
+  text(data: string): HttpResponse;
+  end(): HttpResponse;
+}
+
+export interface HttpRouter {
+  get(path: string, handler: HttpHandler): void;
+  post(path: string, handler: HttpHandler): void;
+  put(path: string, handler: HttpHandler): void;
+  delete(path: string, handler: HttpHandler): void;
+  patch(path: string, handler: HttpHandler): void;
+  use(path: string, handler: HttpHandler): void;
+  use(handler: HttpHandler): void;
+}
+
+export type HttpHandler = (
+  req: HttpRequest,
+  res: HttpResponse,
+  next?: () => void | Promise<void>,
+) => void | Promise<void>;
+
+export interface HttpAdapter {
+  createRouter(): HttpRouter;
+  middleware(handler: HttpHandler): any;
+  static(path: string, directory: string): any;
+}
+
 export type ApplicationFunctionOptions = {
-  getRouter?: (path?: string) => express.Router;
+  getRouter?: (path?: string) => HttpRouter;
   cwd?: string;
   [key: string]: unknown;
 };
+
 export type ApplicationFunction = (
   app: Probot,
   options: ApplicationFunctionOptions,
@@ -79,11 +119,13 @@ export type ServerOptions = {
   Probot: typeof Probot;
   loggingOptions?: LoggingOptions;
   request?: RequestRequestOptions;
+  adapter?: HttpAdapter;
 };
 
 export type MiddlewareOptions = {
   probot: Probot;
   webhooksPath?: string;
+  adapter?: HttpAdapter;
   [key: string]: unknown;
 };
 

@@ -33,7 +33,7 @@ import { createProbot } from "./create-probot.js";
  */
 export function createNodeMiddleware(
   appFn: ApplicationFunction,
-  { probot = createProbot(), webhooksPath } = {} as MiddlewareOptions,
+  { probot = createProbot(), webhooksPath, adapter } = {} as MiddlewareOptions,
 ): (
   request: IncomingMessage,
   response: ServerResponse,

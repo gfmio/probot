@@ -1,0 +1,22 @@
+name = "probot-cloudflare-workers"
+main = "../cloudflare-workers-di.js"
+compatibility_date = "2024-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Environment variables for GitHub App
+[env.production.vars]
+APP_ID = "your-app-id"
+WEBHOOK_SECRET = "your-webhook-secret"
+
+# Secrets (set using: wrangler secret put PRIVATE_KEY)
+# PRIVATE_KEY = "your-private-key"
+
+# KV namespaces for storage (if needed)
+# [[kv_namespaces]]
+# binding = "CACHE"
+# id = "your-kv-namespace-id"
+
+# Routes configuration
+[[routes]]
+pattern = "your-domain.com/api/github/webhooks"
+zone_name = "your-domain.com"

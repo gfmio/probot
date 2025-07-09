@@ -1,28 +1,30 @@
 import { createServer, type Server as HttpServer } from "node:http";
 import { join } from "node:path";
 
-import express, { Router, type Application } from "express";
+import express, { type Application } from "express";
 import type { Logger } from "pino";
 import { createNodeMiddleware as createWebhooksMiddleware } from "@octokit/webhooks";
 
 import { getLoggingMiddleware } from "./logging-middleware.js";
 import { createWebhookProxy } from "../helpers/webhook-proxy.js";
 import { VERSION } from "../version.js";
-import type { ApplicationFunction, ServerOptions } from "../types.js";
+import type { ApplicationFunction, ServerOptions, HttpAdapter, HttpRouter } from "../types.js";
 import type { Probot } from "../index.js";
 import { rebindLog } from "../helpers/rebind-log.js";
+import { ExpressAdapter } from "../adapters/express.js";
 
 // the default path as defined in @octokit/webhooks
 export const defaultWebhooksPath = "/api/github/webhooks";
 
 type State = {
-  cwd?: string;
+  cwd: string;
   httpServer?: HttpServer;
   port?: number;
   host?: string;
   webhookPath: string;
   webhookProxy?: string;
   eventSource?: EventSource;
+  adapter: HttpAdapter;
 };
 
 export class Server {
@@ -37,25 +39,28 @@ export class Server {
 
   constructor(options: ServerOptions = {} as ServerOptions) {
     this.expressApp = express();
-    this.probotApp = new options.Probot({
-      request: options.request,
-    });
+    this.probotApp = new options.Probot(
+      options.request ? { request: options.request } : {},
+    );
     this.log = options.log
       ? rebindLog(options.log)
       : rebindLog(this.probotApp.log.child({ name: "server" }));
 
+    const adapter = options.adapter || new ExpressAdapter();
+
     this.state = {
       cwd: options.cwd || process.cwd(),
-      port: options.port,
+      port: options.port || 3000,
       host: options.host,
       webhookPath: options.webhookPath || defaultWebhooksPath,
       webhookProxy: options.webhookProxy,
+      adapter,
     };
 
     this.expressApp.use(getLoggingMiddleware(this.log, options.loggingOptions));
     this.expressApp.use(
       "/probot/static/",
-      express.static(join(__dirname, "..", "..", "static")),
+      adapter.static("/probot/static/", join(__dirname, "..", "..", "static")),
     );
     // Wrap the webhooks middleware in a function that returns void due to changes in the types for express@v5
     // Before, the express types for middleware simply had a return type of void,
@@ -126,9 +131,14 @@ export class Server {
     return new Promise((resolve) => server.close(resolve));
   }
 
-  public router(path: string = "/") {
-    const newRouter = Router();
-    this.expressApp.use(path, newRouter);
+  public router(path: string = "/"): HttpRouter {
+    const newRouter = this.state.adapter.createRouter();
+    // For Express compatibility, we still need to register the router with the Express app
+    if (this.state.adapter instanceof ExpressAdapter) {
+      // This is a bit of a hack, but we need to integrate the adapter router with Express
+      const expressRouter = (newRouter as any).router || newRouter;
+      this.expressApp.use(path, expressRouter);
+    }
     return newRouter;
   }
 }

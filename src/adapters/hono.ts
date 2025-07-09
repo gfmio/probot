@@ -1,7 +1,21 @@
 import { Hono } from "hono";
-import { serveStatic } from "hono/bun";
 import type { Context, HonoRequest } from "hono";
 import type { HttpAdapter, HttpRequest, HttpResponse, HttpRouter, HttpHandler } from "../types.js";
+
+// Dynamic import for platform-specific static file serving
+let serveStatic: any;
+try {
+  // Try bun-specific static serving first
+  serveStatic = await import("hono/bun").then(m => m.serveStatic);
+} catch {
+  try {
+    // Fallback to node static serving
+    serveStatic = await import("hono/node").then(m => m.serveStatic);
+  } catch {
+    // Fallback for other environments
+    serveStatic = () => async (c: Context) => c.text("Static files not supported", 404);
+  }
+}
 
 export class HonoAdapter implements HttpAdapter {
   createRouter(): HttpRouter {
@@ -29,7 +43,10 @@ export class HonoAdapter implements HttpAdapter {
   }
 
   static(_path: string, directory: string): any {
-    return serveStatic({ root: directory });
+    if (typeof serveStatic === 'function') {
+      return serveStatic({ root: directory });
+    }
+    return async (c: Context) => c.text("Static files not supported in this environment", 404);
   }
 
   private adaptRequest(req: HonoRequest, c: Context): HttpRequest {

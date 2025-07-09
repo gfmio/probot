@@ -21,17 +21,40 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+
+      # - uses: actions/setup-node@v4
+      #   with:
+      #     node-version: lts/*
+      #     cache: npm
+
+      - uses: oven-sh/setup-bun@v2
         with:
-          node-version: lts/*
-          cache: npm
+          bun-version-file: ".bun-version"
+
+      - name: Restore bun cache
+        id: restore-bun-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            ~/.bun
+            !~/.bun/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('.bun-version') }}-${{ hashFiles('bun.lock') }}
       - name: Install dependencies
-        run: npm ci
+        run: bun install --frozen-lockfile
+      - name: Store bun cache
+        id: store-bun-cache
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ~/.bun
+            !~/.bun/cache
+          key: ${{ steps.restore-bun-cache.outputs.cache-primary-key }}
+        if: steps.restore-bun-cache.outputs.cache-hit != 'true'
+
       - name: Build
-        run: npm run build
-      - name: Release
-        run: npx semantic-release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.PROBOTBOT_NPM_TOKEN }}
+        run: bun run build
+      # - name: Release
+      #   run: bunx semantic-release
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #     NPM_TOKEN: ${{ secrets.PROBOTBOT_NPM_TOKEN }}

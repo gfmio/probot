@@ -1,7 +1,13 @@
 import { Hono } from "hono";
 import { serveStatic } from "hono/bun";
 import type { Context, HonoRequest } from "hono";
-import type { HttpAdapter, HttpRequest, HttpResponse, HttpRouter, HttpHandler } from "../types.js";
+import type {
+  HttpAdapter,
+  HttpRequest,
+  HttpResponse,
+  HttpRouter,
+  HttpHandler,
+} from "../types.js";
 
 export class HonoAdapter implements HttpAdapter {
   createRouter(): HttpRouter {
@@ -13,7 +19,7 @@ export class HonoAdapter implements HttpAdapter {
     return async (c: Context, next: () => Promise<void>) => {
       const adaptedReq = this.adaptRequest(c.req, c);
       const adaptedRes = this.adaptResponse(c);
-      
+
       let nextCalled = false;
       const nextFn = () => {
         nextCalled = true;
@@ -21,7 +27,7 @@ export class HonoAdapter implements HttpAdapter {
       };
 
       await handler(adaptedReq, adaptedRes, nextFn);
-      
+
       if (!nextCalled && !c.finalized) {
         await next();
       }
@@ -38,7 +44,7 @@ export class HonoAdapter implements HttpAdapter {
     req.headers.forEach((value, key) => {
       headers[key] = value;
     });
-    
+
     return {
       method: req.method,
       url: url.pathname + url.search,
@@ -119,7 +125,7 @@ class HonoRouter implements HttpRouter {
     return async (c: Context, next: () => Promise<void>) => {
       const adaptedReq = this.adaptRequest(c.req, c);
       const adaptedRes = this.adaptResponse(c);
-      
+
       let nextCalled = false;
       const nextFn = () => {
         nextCalled = true;
@@ -127,7 +133,7 @@ class HonoRouter implements HttpRouter {
       };
 
       await handler(adaptedReq, adaptedRes, nextFn);
-      
+
       if (!nextCalled && !c.finalized) {
         await next();
       }
@@ -140,7 +146,7 @@ class HonoRouter implements HttpRouter {
     req.headers.forEach((value, key) => {
       headers[key] = value;
     });
-    
+
     return {
       method: req.method,
       url: url.pathname + url.search,

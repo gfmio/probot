@@ -1,5 +1,16 @@
-import express, { Router, type Request, type Response, type NextFunction } from "express";
-import type { HttpAdapter, HttpRequest, HttpResponse, HttpRouter, HttpHandler } from "../types.js";
+import express, {
+  Router,
+  type Request,
+  type Response,
+  type NextFunction,
+} from "express";
+import type {
+  HttpAdapter,
+  HttpRequest,
+  HttpResponse,
+  HttpRouter,
+  HttpHandler,
+} from "../types.js";
 
 export class ExpressAdapter implements HttpAdapter {
   createRouter(): HttpRouter {
@@ -58,7 +69,7 @@ export class ExpressAdapter implements HttpAdapter {
 
 class ExpressRouter implements HttpRouter {
   public router: Router;
-  
+
   constructor(router: Router) {
     this.router = router;
   }

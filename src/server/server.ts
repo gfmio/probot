@@ -8,7 +8,12 @@ import { createNodeMiddleware as createWebhooksMiddleware } from "@octokit/webho
 import { getLoggingMiddleware } from "./logging-middleware.js";
 import { createWebhookProxy } from "../helpers/webhook-proxy.js";
 import { VERSION } from "../version.js";
-import type { ApplicationFunction, ServerOptions, HttpAdapter, HttpRouter } from "../types.js";
+import type {
+  ApplicationFunction,
+  ServerOptions,
+  HttpAdapter,
+  HttpRouter,
+} from "../types.js";
 import type { Probot } from "../index.js";
 import { rebindLog } from "../helpers/rebind-log.js";
 import { ExpressAdapter } from "../adapters/express.js";

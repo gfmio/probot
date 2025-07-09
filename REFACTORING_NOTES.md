@@ -53,7 +53,7 @@ export class ExpressAdapter implements HttpAdapter {
     const router = Router();
     return new ExpressRouter(router);
   }
-  
+
   middleware(handler: HttpHandler): any {
     return (req: Request, res: Response, next: NextFunction) => {
       const adaptedReq = this.adaptRequest(req);
@@ -61,7 +61,7 @@ export class ExpressAdapter implements HttpAdapter {
       return handler(adaptedReq, adaptedRes, next);
     };
   }
-  
+
   // ... request/response adaptation logic
 }
 ```
@@ -76,7 +76,7 @@ export class HonoAdapter implements HttpAdapter {
     const app = new Hono();
     return new HonoRouter(app);
   }
-  
+
   // ... Hono-specific adaptation logic
 }
 ```
@@ -89,15 +89,15 @@ The Server class now accepts an adapter parameter:
 export class Server {
   constructor(options: ServerOptions = {} as ServerOptions) {
     const adapter = options.adapter || new ExpressAdapter();
-    
+
     this.state = {
       // ... other state
       adapter,
     };
-    
+
     // Uses adapter for framework-agnostic operations
   }
-  
+
   public router(path: string = "/"): HttpRouter {
     return this.state.adapter.createRouter();
   }
@@ -110,7 +110,7 @@ Application functions now receive framework-agnostic routers:
 
 ```typescript
 export type ApplicationFunctionOptions = {
-  getRouter?: (path?: string) => HttpRouter;  // Was express.Router
+  getRouter?: (path?: string) => HttpRouter; // Was express.Router
   cwd?: string;
   [key: string]: unknown;
 };
@@ -119,21 +119,25 @@ export type ApplicationFunctionOptions = {
 ## Key Benefits
 
 ### 1. **Framework Independence**
+
 - Core Probot logic no longer depends on Express
 - Can be used with any HTTP framework through adapters
 - Easier to test and maintain
 
 ### 2. **Backward Compatibility**
+
 - Existing Probot apps work without changes
 - Express remains the default adapter
 - Gradual migration path available
 
 ### 3. **Extensibility**
+
 - New HTTP frameworks can be added via adapters
 - Custom adapters for specific use cases
 - Future-proof architecture
 
 ### 4. **Better Separation of Concerns**
+
 - HTTP framework concerns separated from GitHub App logic
 - Domain objects are framework-agnostic
 - Cleaner, more maintainable codebase
@@ -141,6 +145,7 @@ export type ApplicationFunctionOptions = {
 ## Usage Examples
 
 ### Express (Default)
+
 ```javascript
 import { Server } from "probot";
 import { ExpressAdapter } from "probot/adapters/express";
@@ -152,6 +157,7 @@ const server = new Server({
 ```
 
 ### Hono
+
 ```javascript
 import { Server } from "probot";
 import { HonoAdapter } from "probot/adapters/hono";
@@ -163,16 +169,17 @@ const server = new Server({
 ```
 
 ### Custom Adapter
+
 ```javascript
 class CustomAdapter implements HttpAdapter {
   createRouter(): HttpRouter {
     // Implement your framework's router
   }
-  
+
   middleware(handler: HttpHandler): any {
     // Adapt framework-agnostic handler to your framework
   }
-  
+
   static(path: string, directory: string): any {
     // Implement static file serving
   }
@@ -182,16 +189,18 @@ class CustomAdapter implements HttpAdapter {
 ## Migration Guide
 
 ### For Existing Apps
+
 No changes required - existing Probot apps continue to work with the Express adapter as default.
 
 ### For New Apps
+
 Consider using the framework-agnostic APIs:
 
 ```javascript
 // Framework-agnostic approach
 const app = (probot, { getRouter }) => {
   const router = getRouter();
-  
+
   router.get("/webhook", (req, res) => {
     res.json({ message: "Framework-agnostic!" });
   });
@@ -201,6 +210,7 @@ const app = (probot, { getRouter }) => {
 ## Testing
 
 The refactoring includes comprehensive tests that verify:
+
 - Adapter interface compliance
 - Request/response adaptation
 - Router functionality
